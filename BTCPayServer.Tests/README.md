@@ -55,6 +55,10 @@ If you are using Powershell:
 
 Same as bitcoin-cli, but with `.\docker-litecoin-cli.ps1` and `.\docker-litecoin-cli.sh` instead. 
 
+### Using the test bitcore-cli
+
+Same as bitcoin-cli, but with `.\docker-bitcore-cli.ps1` and `.\docker-bitcore-cli.sh` instead.
+
 ### Using the test lightning-cli
 
 If you are using Linux:

@@ -44,9 +44,11 @@ namespace BTCPayServer.Tests
             NetworkProvider = new BTCPayNetworkProvider(NetworkType.Regtest);
             ExplorerNode = new RPCClient(RPCCredentialString.Parse(GetEnvironment("TESTS_BTCRPCCONNECTION", "server=http://127.0.0.1:43782;ceiwHEbqWI83:DwubwWsoo3")), NetworkProvider.GetNetwork("BTC").NBitcoinNetwork);
             LTCExplorerNode = new RPCClient(RPCCredentialString.Parse(GetEnvironment("TESTS_LTCRPCCONNECTION", "server=http://127.0.0.1:43783;ceiwHEbqWI83:DwubwWsoo3")), NetworkProvider.GetNetwork("LTC").NBitcoinNetwork);
+            BTXExplorerNode = new RPCClient(RPCCredentialString.Parse(GetEnvironment("TESTS_BTXRPCCONNECTION", "server=http://127.0.0.1:43783;ceiwHEbqWI83:DwubwWsoo3")), NetworkProvider.GetNetwork("BTX").NBitcoinNetwork);
 
             ExplorerClient = new ExplorerClient(NetworkProvider.GetNetwork("BTC").NBXplorerNetwork, new Uri(GetEnvironment("TESTS_BTCNBXPLORERURL", "http://127.0.0.1:32838/")));
             LTCExplorerClient = new ExplorerClient(NetworkProvider.GetNetwork("LTC").NBXplorerNetwork, new Uri(GetEnvironment("TESTS_LTCNBXPLORERURL", "http://127.0.0.1:32838/")));
+            BTXExplorerClient = new ExplorerClient(NetworkProvider.GetNetwork("BTX").NBXplorerNetwork, new Uri(GetEnvironment("TESTS_BTXNBXPLORERURL", "http://127.0.0.1:32838/")));
 
             var btc = NetworkProvider.GetNetwork("BTC").NBitcoinNetwork;
             CustomerLightningD = LightningClientFactory.CreateClient(GetEnvironment("TEST_CUSTOMERLIGHTNINGD", "type=clightning;server=tcp://127.0.0.1:30992/"), btc);
@@ -60,6 +62,7 @@ namespace BTCPayServer.Tests
             {
                 NBXplorerUri = ExplorerClient.Address,
                 LTCNBXplorerUri = LTCExplorerClient.Address,
+                BTXNBXplorerUri = BTXExplorerClient.Address,
                 TestDatabase = Enum.Parse<TestDatabases>(GetEnvironment("TESTS_DB", TestDatabases.Postgres.ToString()), true),
                 Postgres = GetEnvironment("TESTS_POSTGRES", "User ID=postgres;Host=127.0.0.1;Port=39372;Database=btcpayserver"),
                 MySQL = GetEnvironment("TESTS_MYSQL", "User ID=root;Host=127.0.0.1;Port=33036;Database=btcpayserver"),
@@ -140,11 +143,18 @@ namespace BTCPayServer.Tests
             get; set;
         }
 
+        public RPCClient BTXExplorerNode
+        {
+            get; set;
+        }
+
         public ExplorerClient ExplorerClient
         {
             get; set;
         }
         public ExplorerClient LTCExplorerClient { get; set; }
+
+        public ExplorerClient BTXExplorerClient { get; set; }
 
         HttpClient _Http = new HttpClient();
 

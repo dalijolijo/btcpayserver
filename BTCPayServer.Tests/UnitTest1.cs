@@ -1071,6 +1071,70 @@ namespace BTCPayServer.Tests
 
         [Fact]
         [Trait("Integration", "Integration")]
+        public void CanHaveBTXOnlyStore()
+        {
+            using (var tester = ServerTester.Create())
+            {
+                tester.Start();
+                var user = tester.NewAccount();
+                user.GrantAccess();
+                user.RegisterDerivationScheme("BTX");
+
+                // First we try payment with a merchant having only BTC
+                var invoice = user.BitPay.CreateInvoice(new Invoice()
+                {
+                    Price = 500,
+                    Currency = "USD",
+                    PosData = "posData",
+                    OrderId = "orderId",
+                    ItemDesc = "Some description",
+                    FullNotifications = true
+                }, Facade.Merchant);
+                Assert.Single(invoice.CryptoInfo);
+                Assert.Equal("BTX", invoice.CryptoInfo[0].CryptoCode);
+                Assert.True(invoice.PaymentCodes.ContainsKey("BTX"));
+                Assert.True(invoice.SupportedTransactionCurrencies.ContainsKey("BTX"));
+                Assert.True(invoice.SupportedTransactionCurrencies["BTX"].Enabled);
+                Assert.True(invoice.PaymentSubtotals.ContainsKey("BTX"));
+                Assert.True(invoice.PaymentTotals.ContainsKey("BTX"));
+                var cashCow = tester.BTXExplorerNode;
+                var invoiceAddress = BitcoinAddress.Create(invoice.CryptoInfo[0].Address, cashCow.Network);
+                var firstPayment = Money.Coins(0.1m);
+                cashCow.SendToAddress(invoiceAddress, firstPayment);
+                Eventually(() =>
+                {
+                    invoice = user.BitPay.GetInvoice(invoice.Id);
+                    Assert.Equal(firstPayment, invoice.CryptoInfo[0].Paid);
+                });
+
+                Assert.Single(invoice.CryptoInfo); // Only BTC should be presented
+
+                var controller = tester.PayTester.GetController<InvoiceController>(null);
+                var checkout = (Models.InvoicingModels.PaymentModel)((JsonResult)controller.GetStatus(invoice.Id, null).GetAwaiter().GetResult()).Value;
+                Assert.Single(checkout.AvailableCryptos);
+                Assert.Equal("BTX", checkout.CryptoCode);
+
+                //////////////////////
+
+                // Despite it is called BitcoinAddress it should be BTX because BTC is not available
+                Assert.Null(invoice.BitcoinAddress);
+                Assert.NotEqual(1.0m, invoice.Rate);
+                Assert.NotEqual(invoice.BtcDue, invoice.CryptoInfo[0].Due); // Should be BTC rate
+                cashCow.SendToAddress(invoiceAddress, invoice.CryptoInfo[0].Due);
+
+                Eventually(() =>
+                {
+                    invoice = user.BitPay.GetInvoice(invoice.Id);
+                    Assert.Equal("paid", invoice.Status);
+                    checkout = (Models.InvoicingModels.PaymentModel)((JsonResult)controller.GetStatus(invoice.Id, null).GetAwaiter().GetResult()).Value;
+                    Assert.Equal("paid", checkout.Status);
+                });
+
+            }
+        }
+
+        [Fact]
+        [Trait("Integration", "Integration")]
         public void CanModifyRates()
         {
             using (var tester = ServerTester.Create())

@@ -12,8 +12,10 @@ services:
     environment:
       TESTS_BTCRPCCONNECTION: server=http://bitcoind:43782;ceiwHEbqWI83:DwubwWsoo3
       TESTS_LTCRPCCONNECTION: server=http://litecoind:43782;ceiwHEbqWI83:DwubwWsoo3
+      TESTS_BTXRPCCONNECTION: server=http://bitcored:43782;ceiwHEbqWI83:DwubwWsoo3
       TESTS_BTCNBXPLORERURL: http://nbxplorer:32838/
       TESTS_LTCNBXPLORERURL: http://nbxplorer:32838/
+      TESTS_BTXNBXPLORERURL: http://nbxplorer:32838/
       TESTS_DB: "Postgres"
       TESTS_POSTGRES: User ID=postgres;Host=postgres;Port=5432;Database=btcpayserver
       TESTS_MYSQL: User ID=root;Host=mysql;Port=3306;Database=btcpayserver
@@ -77,7 +79,7 @@ services:
       - "32838"
     environment:
       NBXPLORER_NETWORK: regtest
-      NBXPLORER_CHAINS: "btc,ltc"
+      NBXPLORER_CHAINS: "btc,ltc,btx"
       NBXPLORER_BTCRPCURL: http://bitcoind:43782/
       NBXPLORER_BTCNODEENDPOINT: bitcoind:39388
       NBXPLORER_BTCRPCUSER: ceiwHEbqWI83
@@ -86,12 +88,17 @@ services:
       NBXPLORER_LTCNODEENDPOINT: litecoind:39388
       NBXPLORER_LTCRPCUSER: ceiwHEbqWI83
       NBXPLORER_LTCRPCPASSWORD: DwubwWsoo3
+      NBXPLORER_BTXRPCURL: http://litecoind:43782/
+      NBXPLORER_BTXNODEENDPOINT: litecoind:39388
+      NBXPLORER_BTXRPCUSER: ceiwHEbqWI83
+      NBXPLORER_BTXRPCPASSWORD: DwubwWsoo3
       NBXPLORER_BIND: 0.0.0.0:32838
       NBXPLORER_VERBOSE: 1
       NBXPLORER_NOAUTH: 1
     links:
       - bitcoind
       - litecoind
+      - bitcored
 
   bitcoind:
     image: nicolasdorier/docker-bitcoin:0.17.0
@@ -197,6 +204,23 @@ services:
         port=39388
         whitelist=0.0.0.0/0
     ports: 
+      - "43783:43782"
+    expose:
+      - "43782" # RPC
+      - "39388" # P2P
+
+  bitcored:
+    image: nicolasdorier/docker-bitcore:0.15.2
+    environment:
+      BITCOIN_EXTRA_ARGS: |
+        rpcuser=ceiwHEbqWI83
+        rpcpassword=DwubwWsoo3
+        regtest=1
+        server=1
+        rpcport=43782
+        port=39388
+        whitelist=0.0.0.0/0
+    ports:
       - "43783:43782"
     expose:
       - "43782" # RPC
